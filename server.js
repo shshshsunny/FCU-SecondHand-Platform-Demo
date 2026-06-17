@@ -285,18 +285,21 @@ async function handleApi(req, res, url) {
   if (method === 'POST' && pathname === '/api/auth/register') {
     let body;
     try { body = await readJson(req); } catch (error) { return sendError(res, 400, error.message); }
+    const name = cleanText(body.name, 20);
     const studentId = cleanText(body.studentId, 20).toUpperCase();
     const password = String(body.password || '');
-    if (!validateStudentId(studentId) || password.length < 6) {
-      return sendError(res, 400, '請輸入正確學號與至少 6 碼密碼');
+    if (name.length < 2 || !validateStudentId(studentId) || password.length < 6) {
+      return sendError(res, 400, '請輸入帳號名稱、正確學號與至少 6 碼密碼');
     }
     const exists = db.prepare('SELECT id FROM users WHERE student_id = ?').get(studentId);
     if (exists) return sendError(res, 409, '此學號已註冊');
+    const nameExists = db.prepare('SELECT id FROM users WHERE name = ?').get(name);
+    if (nameExists) return sendError(res, 409, '此帳號名稱已被使用');
     const { salt, hash } = hashPassword(password);
     const result = db.prepare(`
       INSERT INTO users (student_id, name, password_hash, password_salt, created_at)
       VALUES (?, ?, ?, ?, ?)
-    `).run(studentId, studentId, hash, salt, isoNow());
+    `).run(studentId, name, hash, salt, isoNow());
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(Number(result.lastInsertRowid));
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -307,13 +310,13 @@ async function handleApi(req, res, url) {
   if (method === 'POST' && pathname === '/api/auth/login') {
     let body;
     try { body = await readJson(req); } catch (error) { return sendError(res, 400, error.message); }
-    const studentId = cleanText(body.studentId, 20).toUpperCase();
+    const identifier = cleanText(body.identifier || body.studentId, 20);
     const password = String(body.password || '');
-    const user = db.prepare('SELECT * FROM users WHERE student_id = ?').get(studentId);
-    if (!user) return sendError(res, 401, '學號或密碼錯誤');
+    const user = db.prepare('SELECT * FROM users WHERE student_id = ? OR name = ? LIMIT 1').get(identifier.toUpperCase(), identifier);
+    if (!user) return sendError(res, 401, '帳號名稱或密碼錯誤');
     const { hash } = hashPassword(password, user.password_salt);
     if (!crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(user.password_hash, 'hex'))) {
-      return sendError(res, 401, '學號或密碼錯誤');
+      return sendError(res, 401, '帳號名稱或密碼錯誤');
     }
     db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(isoNow());
     const token = crypto.randomBytes(32).toString('hex');

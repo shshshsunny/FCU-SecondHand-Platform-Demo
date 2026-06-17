@@ -695,7 +695,7 @@ function bindEvents() {
     try {
       const data = await api('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ studentId: $('#loginStudentId').value, password: $('#loginPassword').value })
+        body: JSON.stringify({ identifier: $('#loginIdentifier').value, password: $('#loginPassword').value })
       });
       setSession(data.token, data.user);
       closeModal('authModal');
@@ -712,7 +712,11 @@ function bindEvents() {
     try {
       const data = await api('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ studentId: $('#registerStudentId').value, password: $('#registerPassword').value })
+        body: JSON.stringify({
+          name: $('#registerName').value,
+          studentId: $('#registerStudentId').value,
+          password: $('#registerPassword').value
+        })
       });
       setSession(data.token, data.user);
       closeModal('authModal');

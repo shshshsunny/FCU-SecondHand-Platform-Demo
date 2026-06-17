@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#24483c" />
   <meta name="description" content="ReDorm 校園二手宿舍物品交易平台" />
   <title>ReDorm｜校園二手宿舍物品交易平台</title>
-  <link rel="stylesheet" href="/styles.css?v=2.0.2" />
+  <link rel="stylesheet" href="/styles.css?v=2.0.3" />
 </head>
 <body>
   <div class="app-shell">
@@ -152,17 +152,18 @@
   <div class="modal-backdrop hidden" id="authModal">
     <section class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
       <button class="modal-close" data-close="authModal">×</button>
-      <div class="modal-side"><span class="brand-mark large">R</span><h2>歡迎來到 ReDorm</h2><p>只需學號與密碼即可註冊、登入與使用完整功能。</p><div class="demo-box"><strong>展示帳號</strong><span>學號：D1348918</span><span>密碼：123456</span></div></div>
+      <div class="modal-side"><span class="brand-mark large">R</span><h2>歡迎來到 ReDorm</h2><p>登入時可輸入帳號名稱或學號，再搭配密碼即可使用完整功能。</p><div class="demo-box"><strong>展示帳號</strong><span>帳號名稱：張祐瑄</span><span>學號：D1348918</span><span>密碼：123456</span></div></div>
       <div class="modal-main">
         <div class="tab-row"><button class="tab-btn active" data-auth-tab="login">登入</button><button class="tab-btn" data-auth-tab="register">註冊</button></div>
         <form id="loginForm" class="auth-form">
-          <h2 id="authTitle">會員登入</h2><p>輸入學號與密碼。</p>
-          <label>學號<input id="loginStudentId" value="D1348918" autocomplete="username" maxlength="20" required></label>
-          <label>密碼<input id="loginPassword" type="password" value="123456" autocomplete="current-password" required></label>
+          <h2 id="authTitle">會員登入</h2><p>輸入帳號名稱或學號與密碼。</p>
+          <label>帳號名稱或學號<input id="loginIdentifier" placeholder="例如 張祐瑄 或 D1348918" autocomplete="username" maxlength="20" required></label>
+          <label>密碼<input id="loginPassword" type="password" placeholder="請輸入密碼" autocomplete="current-password" required></label>
           <button class="primary-btn full" type="submit">登入系統</button>
         </form>
         <form id="registerForm" class="auth-form hidden">
-          <h2>建立帳號</h2><p>不需要電子信箱，只要學號與自己設定的密碼。</p>
+          <h2>建立帳號</h2><p>不需要電子信箱，只要帳號名稱、學號與自己設定的密碼。</p>
+          <label>帳號名稱<input id="registerName" placeholder="例如 張祐瑄" autocomplete="name" maxlength="20" required></label>
           <label>學號<input id="registerStudentId" placeholder="例如 D1348918" autocomplete="username" maxlength="20" required></label>
           <label>設定密碼<input id="registerPassword" type="password" minlength="6" autocomplete="new-password" placeholder="至少 6 碼" required></label>
           <button class="primary-btn full" type="submit">註冊並登入</button>
@@ -204,6 +205,6 @@
   </div>
 
   <div class="toast-wrap" id="toastWrap"></div>
-  <script src="/app.js?v=2.0.2" defer></script>
+  <script src="/app.js?v=2.0.3" defer></script>
 </body>
 </html>
