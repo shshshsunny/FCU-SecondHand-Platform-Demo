@@ -765,10 +765,13 @@ function serveStatic(req, res, url) {
       '.webp': 'image/webp'
     };
     const data = fs.readFileSync(filePath);
+    const cacheControl = ['.html', '.css', '.js'].includes(ext)
+      ? 'no-cache, no-store, must-revalidate'
+      : 'public, max-age=3600';
     res.writeHead(200, {
       'Content-Type': types[ext] || 'application/octet-stream',
       'Content-Length': data.length,
-      'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=3600'
+      'Cache-Control': cacheControl
     });
     res.end(data);
   });
