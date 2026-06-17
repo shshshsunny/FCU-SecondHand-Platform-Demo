@@ -1,0 +1,13 @@
+{
+  "name": "redorm-fullstack",
+  "version": "2.0.0",
+  "private": true,
+  "description": "校園二手宿舍物品交易平台：Node.js + SQLite 完整展示系統",
+  "scripts": {
+    "start": "node --no-warnings server.js",
+    "reset": "node --no-warnings reset-db.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}

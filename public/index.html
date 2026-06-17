@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#24483c" />
+  <meta name="description" content="ReDorm 校園二手宿舍物品交易平台" />
+  <title>ReDorm｜校園二手宿舍物品交易平台</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" data-view="home" aria-label="回到首頁">
+        <span class="brand-mark">R</span>
+        <span><strong>ReDorm</strong><small>校園二手生活</small></span>
+      </a>
+      <nav class="nav-list" aria-label="主要導覽">
+        <button class="nav-item active" data-view="home"><span>⌂</span>首頁</button>
+        <button class="nav-item" data-view="market"><span>▦</span>商品市集</button>
+        <button class="nav-item" data-view="manage"><span>＋</span>商品管理</button>
+        <button class="nav-item" data-view="messages"><span>✉</span>留言板</button>
+        <button class="nav-item" data-view="contact"><span>💬</span>買賣聯絡</button>
+        <button class="nav-item" data-view="analytics"><span>⌁</span>數據分析</button>
+      </nav>
+      <div class="sidebar-card">
+        <span class="eyebrow light">SDGs 12</span>
+        <strong>讓物品多一次被需要的機會</strong>
+        <p>減少浪費，延長宿舍用品的使用週期。</p>
+      </div>
+      <div class="db-status" id="dbStatus"><span class="status-dot"></span><span>資料庫連線中</span></div>
+    </aside>
+
+    <div class="main-wrap">
+      <header class="topbar">
+        <button class="icon-btn mobile-menu" id="mobileMenuBtn" aria-label="開啟選單">☰</button>
+        <div class="topbar-title"><strong id="sectionLabel">首頁</strong><small>逢甲校園二手物品平台</small></div>
+        <div class="topbar-actions">
+          <button class="ghost-btn desktop-only" id="quickAddBtn">＋ 上架商品</button>
+          <button class="profile-btn" id="profileBtn">
+            <span class="avatar" id="profileAvatar">訪</span>
+            <span class="profile-copy"><strong id="profileName">訪客模式</strong><small id="profileStatus">點擊登入</small></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="view active" id="view-home">
+          <div class="hero">
+            <div class="hero-copy">
+              <span class="pill">校園限定 · 安心面交</span>
+              <h1>把宿舍裡用不到的東西，<br>交給下一個需要的人。</h1>
+              <p>支援商品圖片、商品頁買賣留言、學號登入、商品管理與即時數據分析。</p>
+              <div class="hero-actions">
+                <button class="primary-btn accent" data-view="market">開始逛商品</button>
+                <button class="secondary-btn light-btn" data-view="manage">我要上架</button>
+              </div>
+              <div class="hero-proof"><span>✓ SQLite 資料庫</span><span>✓ 商品頁私訊</span><span>✓ 手機可用</span></div>
+            </div>
+            <div class="hero-visual" aria-hidden="true">
+              <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+              <div class="hero-orb"><span>♻</span><small>循環再利用</small></div>
+              <div class="floating-card card-a">📚<small>課本</small></div>
+              <div class="floating-card card-b">🪑<small>家具</small></div>
+              <div class="floating-card card-c">🌀<small>家電</small></div>
+            </div>
+          </div>
+          <div class="stats-grid" id="homeStats"></div>
+          <div class="section-heading"><div><span class="eyebrow">LATEST PRODUCTS</span><h2>最新上架</h2></div><button class="text-btn" data-view="market">查看全部 →</button></div>
+          <div class="product-grid" id="latestProducts"></div>
+        </section>
+
+        <section class="view" id="view-market">
+          <div class="page-heading">
+            <div><span class="eyebrow">MARKETPLACE</span><h1>商品市集</h1><p>點進每件商品即可看圖片與直接留言給賣家。</p></div>
+            <button class="primary-btn" data-view="manage">＋ 上架商品</button>
+          </div>
+          <div class="filter-panel">
+            <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="搜尋商品、描述、賣家或學號…"></label>
+            <select id="categoryFilter" aria-label="商品分類"><option value="all">全部分類</option><option>家具</option><option>家電</option><option>書籍</option><option>生活用品</option><option>其他</option></select>
+            <select id="sortFilter" aria-label="排序方式"><option value="newest">最新上架</option><option value="priceLow">價格由低到高</option><option value="priceHigh">價格由高到低</option><option value="popular">瀏覽人氣</option></select>
+          </div>
+          <div class="result-row"><p id="resultCount">載入中…</p><button class="ghost-btn small" id="clearFilterBtn">清除篩選</button></div>
+          <div class="product-grid" id="marketProducts"></div>
+          <div class="empty-state hidden" id="marketEmpty"><span>⌕</span><h3>找不到符合條件的商品</h3><p>換個關鍵字或清除篩選後再試一次。</p></div>
+        </section>
+
+        <section class="view" id="view-manage">
+          <div class="page-heading">
+            <div><span class="eyebrow">PRODUCT MANAGEMENT</span><h1>商品管理</h1><p>上傳商品圖片、新增、修改或刪除自己的刊登。</p></div>
+            <button class="primary-btn" id="openProductModalBtn">＋ 新增商品</button>
+          </div>
+          <div class="notice-card" id="loginNotice"><div><strong>目前為訪客模式</strong><p>登入後即可上傳圖片與管理商品。</p></div><button class="secondary-btn" id="noticeLoginBtn">登入／註冊</button></div>
+          <div class="table-card">
+            <div class="table-toolbar"><div><span class="eyebrow">MY PRODUCTS</span><h2>我的刊登商品</h2></div><span class="count-badge" id="myProductCount">0 件</span></div>
+            <div class="table-wrap">
+              <table><thead><tr><th>商品</th><th>分類</th><th>價格</th><th>狀態</th><th>瀏覽</th><th>操作</th></tr></thead><tbody id="myProductsBody"></tbody></table>
+            </div>
+            <div class="empty-inline hidden" id="myProductsEmpty">目前沒有刊登商品。</div>
+          </div>
+        </section>
+
+        <section class="view" id="view-messages">
+          <div class="page-heading"><div><span class="eyebrow">MESSAGE BOARD</span><h1>平台留言板</h1><p>留下使用心得、系統問題或交易回饋。</p></div></div>
+          <div class="message-layout">
+            <form class="form-card" id="messageForm">
+              <div class="form-card-heading"><span class="eyebrow">NEW MESSAGE</span><h2>新增留言</h2></div>
+              <label>留言類型<select id="messageType"><option>使用建議</option><option>系統問題</option><option>交易回饋</option><option>其他</option></select></label>
+              <label>留言內容<textarea id="messageContent" rows="6" maxlength="200" placeholder="請輸入 5～200 字內容" required></textarea></label>
+              <div class="form-footer"><small id="messageCounter">0 / 200</small><button class="primary-btn" type="submit">送出留言</button></div>
+            </form>
+            <div class="message-list-card">
+              <div class="list-heading"><div><span class="eyebrow">COMMUNITY</span><h2>最新留言</h2></div><select id="messageFilter"><option value="all">全部類型</option><option>使用建議</option><option>系統問題</option><option>交易回饋</option><option>其他</option></select></div>
+              <div class="message-list" id="messageList"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-contact">
+          <div class="page-heading"><div><span class="eyebrow">BUYER & SELLER CONTACT</span><h1>買賣聯絡</h1><p>這裡會整理所有從商品頁建立的買賣對話。</p></div></div>
+          <div class="notice-card" id="contactLoginNotice"><div><strong>登入後才能查看聯絡訊息</strong><p>也可以直接從商品詳細頁開始留言。</p></div><button class="secondary-btn" id="contactLoginBtn">登入／註冊</button></div>
+          <div class="contact-layout" id="contactWorkspace">
+            <aside class="conversation-card">
+              <div class="conversation-heading"><span class="eyebrow">CONVERSATIONS</span><h2>聯絡紀錄</h2></div>
+              <div class="conversation-list" id="conversationList"></div>
+              <div class="empty-inline hidden" id="conversationEmpty">目前沒有聯絡紀錄。</div>
+            </aside>
+            <section class="chat-card">
+              <div class="chat-empty" id="chatEmpty"><span>💬</span><h3>選擇一筆聯絡紀錄</h3><p>討論商品狀況、面交時間與地點。</p></div>
+              <div class="chat-panel hidden" id="chatPanel">
+                <div class="chat-header" id="chatHeader"></div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <form class="chat-form" id="chatForm"><textarea id="chatInput" rows="2" maxlength="500" placeholder="輸入訊息…" required></textarea><button class="primary-btn" type="submit">傳送</button></form>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="view-analytics">
+          <div class="page-heading"><div><span class="eyebrow">DATA ANALYSIS</span><h1>數據分析</h1><p>從資料庫即時計算平台商品與使用情況。</p></div><span class="live-badge"><span></span> 即時資料</span></div>
+          <div class="stats-grid" id="analyticsStats"></div>
+          <div class="analytics-grid">
+            <div class="chart-card"><div class="chart-heading"><div><span class="eyebrow">CATEGORY DISTRIBUTION</span><h2>商品分類分布</h2></div></div><div class="bar-chart" id="categoryChart"></div></div>
+            <div class="chart-card"><div class="chart-heading"><div><span class="eyebrow">POPULAR PRODUCTS</span><h2>熱門商品排行</h2></div></div><div class="rank-list" id="popularList"></div></div>
+          </div>
+          <div class="chart-card seller-card"><div class="chart-heading"><div><span class="eyebrow">ACTIVE SELLERS</span><h2>活躍賣家</h2></div></div><div class="seller-grid" id="sellerList"></div></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="authModal">
+    <section class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <button class="modal-close" data-close="authModal">×</button>
+      <div class="modal-side"><span class="brand-mark large">R</span><h2>歡迎來到 ReDorm</h2><p>只需學號與密碼即可註冊、登入與使用完整功能。</p><div class="demo-box"><strong>展示帳號</strong><span>學號：D1348918</span><span>密碼：123456</span></div></div>
+      <div class="modal-main">
+        <div class="tab-row"><button class="tab-btn active" data-auth-tab="login">登入</button><button class="tab-btn" data-auth-tab="register">註冊</button></div>
+        <form id="loginForm" class="auth-form">
+          <h2 id="authTitle">會員登入</h2><p>輸入學號與密碼。</p>
+          <label>學號<input id="loginStudentId" value="D1348918" autocomplete="username" maxlength="20" required></label>
+          <label>密碼<input id="loginPassword" type="password" value="123456" autocomplete="current-password" required></label>
+          <button class="primary-btn full" type="submit">登入系統</button>
+        </form>
+        <form id="registerForm" class="auth-form hidden">
+          <h2>建立帳號</h2><p>不需要電子信箱，只要學號與自己設定的密碼。</p>
+          <label>學號<input id="registerStudentId" placeholder="例如 D1348918" autocomplete="username" maxlength="20" required></label>
+          <label>設定密碼<input id="registerPassword" type="password" minlength="6" autocomplete="new-password" placeholder="至少 6 碼" required></label>
+          <button class="primary-btn full" type="submit">註冊並登入</button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop hidden" id="productModal">
+    <section class="modal product-modal" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
+      <button class="modal-close" data-close="productModal">×</button>
+      <div class="modal-header"><span class="eyebrow">PRODUCT FORM</span><h2 id="productModalTitle">新增商品</h2><p>可直接從電腦或手機相簿選擇商品圖片。</p></div>
+      <form id="productForm" class="product-form">
+        <input type="hidden" id="productId">
+        <div class="image-upload-block">
+          <div class="image-preview" id="imagePreview"><span>📷</span><small>尚未選擇圖片</small></div>
+          <div class="image-upload-copy"><strong>商品圖片</strong><p>支援 JPG、PNG、WEBP，系統會自動壓縮後存入資料庫。</p><label class="file-btn">選擇圖片<input id="productImage" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label><button type="button" class="text-btn danger-text hidden" id="removeImageBtn">移除圖片</button></div>
+        </div>
+        <div class="form-grid two"><label>商品名稱<input id="productName" maxlength="60" required></label><label>分類<select id="productCategory"><option>家具</option><option>家電</option><option>書籍</option><option>生活用品</option><option>其他</option></select></label></div>
+        <div class="form-grid three"><label>價格（NT$）<input id="productPrice" type="number" min="0" max="1000000" required></label><label>商品狀況<select id="productCondition"><option>近全新</option><option>保存良好</option><option>有使用痕跡</option></select></label><label>狀態<select id="productStatus"><option>販售中</option><option>已售出</option></select></label></div>
+        <label>無圖片時顯示圖示<select id="productEmoji"><option>📦</option><option>🪑</option><option>🛏️</option><option>🌀</option><option>🫖</option><option>📚</option><option>📒</option><option>🧺</option><option>👕</option><option>💡</option></select></label>
+        <label>商品描述<textarea id="productDescription" rows="5" maxlength="300" required></textarea></label>
+        <div class="modal-actions"><button type="button" class="ghost-btn" data-close="productModal">取消</button><button type="submit" class="primary-btn" id="productSubmitBtn">儲存商品</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-backdrop hidden" id="detailModal">
+    <section class="modal detail-modal" role="dialog" aria-modal="true">
+      <button class="modal-close" data-close="detailModal">×</button>
+      <div id="detailContent"></div>
+    </section>
+  </div>
+
+  <div class="profile-menu hidden" id="profileMenu">
+    <div id="profileMenuUser"></div>
+    <button id="profileMenuLogin">登入／註冊</button>
+    <button class="danger-text hidden" id="logoutBtn">登出</button>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
