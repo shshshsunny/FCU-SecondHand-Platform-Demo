@@ -24,11 +24,24 @@
 - 商品總數、販售中、已售出、平均價格等即時分析
 - 商品分類分布、熱門排行、活躍賣家排行
 
+## 開發環境
+
+| 類別 | 軟體或技術 | 用途 |
+| --- | --- | --- |
+| 作業系統 | Windows 11 / macOS | 系統開發及測試環境 |
+| 程式開發工具 | Visual Studio Code | 撰寫及除錯程式 |
+| 前端技術 | HTML、CSS、JavaScript | 建立網頁介面及互動效果 |
+| 前端框架 | 無，採用原生 JavaScript | 直接處理畫面渲染與事件控制 |
+| 後端技術 | Node.js、Express.js | 處理系統邏輯及 API |
+| 資料庫 | SQLite | 儲存會員、商品、留言及對話資料 |
+| 版本管理 | GitHub | 儲存及管理專題程式碼 |
+| 瀏覽器 | Google Chrome、Microsoft Edge | 系統操作及功能測試 |
+
 ## 執行需求
 
 - Node.js 22.5 以上版本
 - 不需要執行 `npm install`
-- 不需要另外安裝 SQL Server
+- 不需要另外安裝 SQL Server，資料庫使用 SQLite
 
 ## 執行方式
 

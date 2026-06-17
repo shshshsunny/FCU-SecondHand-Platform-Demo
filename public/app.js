@@ -59,6 +59,7 @@ async function api(path, options = {}) {
 }
 
 function openModal(id) {
+  if (id === 'authModal') resetAuthForms();
   $(`#${id}`).classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 }
@@ -97,6 +98,19 @@ function clearSession(showToast = true) {
   renderContacts();
   if (state.detailProductId && !$('#detailModal').classList.contains('hidden')) renderDetailContactGuest();
   if (showToast) toast('已登出');
+}
+
+function resetAuthForms() {
+  $('#loginForm')?.reset();
+  $('#registerForm')?.reset();
+  $('#loginIdentifier').value = '';
+  $('#loginPassword').value = '';
+  $('#registerName').value = '';
+  $('#registerStudentId').value = '';
+  $('#registerPassword').value = '';
+  $$('.tab-btn').forEach(node => node.classList.toggle('active', node.dataset.authTab === 'login'));
+  $('#loginForm').classList.remove('hidden');
+  $('#registerForm').classList.add('hidden');
 }
 
 async function init() {
