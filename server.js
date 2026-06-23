@@ -22,6 +22,28 @@ function isoNow() {
   return new Date().toISOString();
 }
 
+function ensureOperationLogsTable() {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS operation_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      operation TEXT NOT NULL CHECK (operation IN ('INSERT', 'UPDATE', 'DELETE')),
+      table_name TEXT NOT NULL,
+      record_id INTEGER NOT NULL,
+      details TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_operation_logs_created_at ON operation_logs(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_operation_logs_table_record ON operation_logs(table_name, record_id);
+  `);
+}
+
+function logOperation(operation, tableName, recordId, details = {}) {
+  db.prepare(`
+    INSERT INTO operation_logs (operation, table_name, record_id, details, created_at)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(operation, tableName, recordId, JSON.stringify(details), isoNow());
+}
+
 function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
   const hash = crypto.scryptSync(password, salt, 64).toString('hex');
   return { salt, hash };
@@ -30,6 +52,7 @@ function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
 function initDatabase() {
   const exists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").get();
   if (!exists) db.exec(fs.readFileSync(SCHEMA_PATH, 'utf8'));
+  ensureOperationLogsTable();
 
   const count = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
   if (count > 0) return;
@@ -346,9 +369,9 @@ async function handleApi(req, res, url) {
     const clauses = [];
     const params = [];
     if (search) {
-      clauses.push('(p.name LIKE ? OR p.description LIKE ? OR u.name LIKE ? OR u.student_id LIKE ?)');
+      clauses.push('(p.name LIKE ? OR p.description LIKE ? OR p.category LIKE ? OR u.name LIKE ? OR u.student_id LIKE ?)');
       const q = `%${search}%`;
-      params.push(q, q, q, q);
+      params.push(q, q, q, q, q);
     }
     if (category && category !== 'all') {
       clauses.push('p.category = ?');
@@ -359,10 +382,10 @@ async function handleApi(req, res, url) {
       params.push(currentUser.id);
     }
     const orderMap = {
-      newest: 'p.created_at DESC',
-      priceLow: 'p.price ASC, p.created_at DESC',
-      priceHigh: 'p.price DESC, p.created_at DESC',
-      popular: 'p.views DESC, p.created_at DESC'
+      newest: "CASE WHEN p.status = '販售中' THEN 0 ELSE 1 END ASC, p.created_at DESC",
+      priceLow: "CASE WHEN p.status = '販售中' THEN 0 ELSE 1 END ASC, p.price ASC, p.created_at DESC",
+      priceHigh: "CASE WHEN p.status = '販售中' THEN 0 ELSE 1 END ASC, p.price DESC, p.created_at DESC",
+      popular: "CASE WHEN p.status = '販售中' THEN 0 ELSE 1 END ASC, p.views DESC, p.created_at DESC"
     };
     const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
     const rows = db.prepare(`${productSelect(where)} ORDER BY ${orderMap[sort] || orderMap.newest}`).all(...params);
@@ -400,7 +423,16 @@ async function handleApi(req, res, url) {
       INSERT INTO products (user_id, name, category, price, condition, status, emoji, image_data, description, views, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
     `).run(user.id, payload.name, payload.category, payload.price, payload.condition, payload.status, payload.emoji, payload.imageData || null, payload.description, now, now);
-    const row = db.prepare(`${productSelect('WHERE p.id = ?')}`).get(Number(result.lastInsertRowid));
+    const productId = Number(result.lastInsertRowid);
+    logOperation('INSERT', 'products', productId, {
+      userId: user.id,
+      studentId: user.student_id,
+      name: payload.name,
+      category: payload.category,
+      price: payload.price,
+      status: payload.status
+    });
+    const row = db.prepare(`${productSelect('WHERE p.id = ?')}`).get(productId);
     return sendJson(res, 201, { ok: true, product: productRow(row) });
   }
 
@@ -420,6 +452,24 @@ async function handleApi(req, res, url) {
       SET name=?, category=?, price=?, condition=?, status=?, emoji=?, image_data=?, description=?, updated_at=?
       WHERE id=?
     `).run(payload.name, payload.category, payload.price, payload.condition, payload.status, payload.emoji, payload.imageData || null, payload.description, isoNow(), id);
+    logOperation('UPDATE', 'products', id, {
+      userId: user.id,
+      studentId: user.student_id,
+      before: {
+        name: existing.name,
+        category: existing.category,
+        price: existing.price,
+        condition: existing.condition,
+        status: existing.status
+      },
+      after: {
+        name: payload.name,
+        category: payload.category,
+        price: payload.price,
+        condition: payload.condition,
+        status: payload.status
+      }
+    });
     const row = db.prepare(`${productSelect('WHERE p.id = ?')}`).get(id);
     return sendJson(res, 200, { ok: true, product: productRow(row) });
   }
@@ -432,6 +482,17 @@ async function handleApi(req, res, url) {
     if (!existing) return sendError(res, 404, '找不到商品');
     if (existing.user_id !== user.id) return sendError(res, 403, '只能刪除自己的商品');
     db.prepare('DELETE FROM products WHERE id = ?').run(id);
+    logOperation('DELETE', 'products', id, {
+      userId: user.id,
+      studentId: user.student_id,
+      deleted: {
+        name: existing.name,
+        category: existing.category,
+        price: existing.price,
+        condition: existing.condition,
+        status: existing.status
+      }
+    });
     return sendJson(res, 200, { ok: true });
   }
 

@@ -73,6 +73,106 @@ node --no-warnings server.js
 http://localhost:3000
 ```
 
+## 本機 SQLite Demo：搭配 DB Browser for SQLite
+
+這個專案使用同一份本機 SQLite 資料庫：
+
+```text
+data/redorm.db
+```
+
+Demo 時可以同時開網站與 DB Browser for SQLite，直接觀察商品資料列的新增、修改、刪除。
+
+### 1. 啟動網站
+
+在專案資料夾執行：
+
+```bash
+npm start
+```
+
+接著開啟：
+
+```text
+http://localhost:3000
+```
+
+### 2. 用 DB Browser 開啟資料庫
+
+在 DB Browser for SQLite 選擇：
+
+```text
+Open Database
+```
+
+然後開啟本專案的：
+
+```text
+data/redorm.db
+```
+
+### 3. 查看商品資料
+
+切到 `Execute SQL`，執行：
+
+```sql
+SELECT * FROM products ORDER BY id;
+```
+
+在網站新增商品後，再回 DB Browser 重新執行這段 SQL，就可以看到 `products` 多一筆資料。
+
+### 4. 查看操作紀錄
+
+本機 Demo 版另外提供 `operation_logs` 資料表。當網站成功新增、修改或刪除商品時，後端會寫入一筆操作紀錄。
+
+```sql
+SELECT * FROM operation_logs ORDER BY id DESC;
+```
+
+欄位說明：
+
+| 欄位 | 說明 |
+| --- | --- |
+| `operation` | 操作類型，包含 `INSERT`、`UPDATE`、`DELETE` |
+| `table_name` | 被操作的資料表，例如 `products` |
+| `record_id` | 被操作的資料列 id |
+| `details` | JSON 格式的補充資訊，例如商品名稱、價格、操作者學號 |
+| `created_at` | 操作時間 |
+
+### 5. Demo 操作流程
+
+1. 使用展示帳號登入網站。
+2. 到商品管理新增一筆商品。
+3. 在 DB Browser 執行：
+
+   ```sql
+   SELECT * FROM products ORDER BY id;
+   ```
+
+4. 修改剛剛新增的商品，例如價格或狀態。
+5. 再次查詢 `products`，確認欄位已更新。
+6. 刪除剛剛新增的商品。
+7. 查詢操作紀錄：
+
+   ```sql
+   SELECT * FROM operation_logs ORDER BY id DESC;
+   ```
+
+8. 確認有對應的 `INSERT`、`UPDATE`、`DELETE` 紀錄。
+
+### 6. DB Browser 看不到最新資料時
+
+此專案維持 SQLite WAL 模式。若網站已操作成功，但 DB Browser 暫時看不到最新資料，可以依序嘗試：
+
+1. 在 DB Browser 重新執行 SQL 或重新整理資料庫連線。
+2. 在 DB Browser 執行：
+
+   ```sql
+   PRAGMA wal_checkpoint(FULL);
+   ```
+
+3. 關閉 DB Browser 後，重新開啟 `data/redorm.db`。
+
 ## 展示帳號
 
 ```text
@@ -132,6 +232,7 @@ products
 messages
 conversations
 chat_messages
+operation_logs
 ```
 
 建表語法：

@@ -6,4 +6,4 @@ for (const suffix of ['', '-shm', '-wal']) {
   const file = dbPath + suffix;
   if (fs.existsSync(file)) fs.rmSync(file);
 }
-console.log('資料庫已重設。下次 npm start 會重新建立測試資料。');
+console.log('資料庫已重設。下次 npm start 會重新建立測試資料與 operation_logs 資料表。');

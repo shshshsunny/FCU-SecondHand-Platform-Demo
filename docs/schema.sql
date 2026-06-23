@@ -66,6 +66,15 @@ CREATE TABLE chat_messages (
   FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE operation_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  operation TEXT NOT NULL CHECK (operation IN ('INSERT', 'UPDATE', 'DELETE')),
+  table_name TEXT NOT NULL,
+  record_id INTEGER NOT NULL,
+  details TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX idx_products_category ON products(category);
 CREATE INDEX idx_products_created_at ON products(created_at DESC);
 CREATE INDEX idx_products_user_id ON products(user_id);
@@ -73,3 +82,5 @@ CREATE INDEX idx_messages_created_at ON messages(created_at DESC);
 CREATE INDEX idx_conversations_buyer ON conversations(buyer_id, updated_at DESC);
 CREATE INDEX idx_conversations_seller ON conversations(seller_id, updated_at DESC);
 CREATE INDEX idx_chat_messages_conversation ON chat_messages(conversation_id, created_at ASC);
+CREATE INDEX idx_operation_logs_created_at ON operation_logs(created_at DESC);
+CREATE INDEX idx_operation_logs_table_record ON operation_logs(table_name, record_id);

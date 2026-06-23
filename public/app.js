@@ -14,7 +14,12 @@ const state = {
   pendingImageData: '',
   detailProductId: null,
   detailContactData: null,
-  detailConversationId: null
+  detailConversationId: null,
+  filters: {
+    search: '',
+    category: 'all',
+    sort: 'newest'
+  }
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -115,6 +120,7 @@ function resetAuthForms() {
 
 async function init() {
   bindEvents();
+  syncFilterControls();
   renderProductSkeletons();
   await Promise.allSettled([checkHealth(), restoreSession()]);
   await Promise.all([loadProducts(), loadMessages(), loadAnalytics(), loadConversations()]);
@@ -145,9 +151,7 @@ async function restoreSession() {
 
 async function loadProducts() {
   const params = new URLSearchParams();
-  const search = $('#searchInput').value.trim();
-  const category = $('#categoryFilter').value;
-  const sort = $('#sortFilter').value;
+  const { search, category, sort } = state.filters;
   if (search) params.set('search', search);
   if (category !== 'all') params.set('category', category);
   params.set('sort', sort);
@@ -230,6 +234,31 @@ function scrollGlobalChat() {
   if (box) box.scrollTop = box.scrollHeight;
 }
 
+function syncFilterControls() {
+  const { search, category, sort } = state.filters;
+  ['#searchInput', '#marketSearchInput', '#globalSearchInput'].forEach(selector => {
+    const node = $(selector);
+    if (node && node.value !== search) node.value = search;
+  });
+  ['#categoryFilter', '#marketCategoryFilter'].forEach(selector => {
+    const node = $(selector);
+    if (node && node.value !== category) node.value = category;
+  });
+  ['#sortFilter', '#marketSortFilter'].forEach(selector => {
+    const node = $(selector);
+    if (node && node.value !== sort) node.value = sort;
+  });
+  $$('.category-tab').forEach(node => {
+    node.classList.toggle('active', node.dataset.categoryShortcut === category);
+  });
+}
+
+function setFilters(nextFilters = {}) {
+  state.filters = { ...state.filters, ...nextFilters };
+  syncFilterControls();
+  return loadProducts();
+}
+
 async function loadAnalytics() {
   try {
     const data = await api('/api/analytics');
@@ -245,7 +274,7 @@ function switchView(view) {
   state.currentView = view;
   $$('.view').forEach(node => node.classList.toggle('active', node.id === `view-${view}`));
   $$('.nav-item').forEach(node => node.classList.toggle('active', node.dataset.view === view));
-  const labels = { home: '首頁', market: '商品市集', manage: '商品管理', messages: '留言板', contact: '買賣聯絡', analytics: '數據分析' };
+  const labels = { home: '首頁', market: '商品市集', manage: '商品刊登工作台', messages: '公告與留言板', contact: '交易專區', analytics: '平台概況' };
   $('#sectionLabel').textContent = labels[view] || '首頁';
   $('#sidebar').classList.remove('open');
   $('#profileMenu').classList.add('hidden');
@@ -285,6 +314,8 @@ function renderProductSkeletons() {
   const skeleton = '<div class="loading-card"></div>'.repeat(4);
   $('#latestProducts').innerHTML = skeleton;
   $('#marketProducts').innerHTML = skeleton;
+  $('#featuredProducts').innerHTML = skeleton;
+  $('#marketFeaturedProducts').innerHTML = skeleton;
 }
 
 function productImageMarkup(product, className = '') {
@@ -306,19 +337,53 @@ function productCard(product) {
         <div class="product-meta"><span>${escapeHtml(product.condition)}</span><span>${formatDate(product.createdAt)}</span></div>
         <h3>${escapeHtml(product.name)}</h3>
         <div class="product-desc">${escapeHtml(product.description)}</div>
-        <div class="product-bottom"><div class="price"><small>NT$</small>${formatMoney(product.price)}</div><div class="views">瀏覽 ${product.views}</div></div>
+        <button class="product-favorite" type="button" aria-label="收藏商品">♡</button>
+        <div class="product-bottom"><div class="price"><small>NT$</small>${formatMoney(product.price)}</div><div class="views">${escapeHtml(product.seller?.name || '校園賣家')} · 瀏覽 ${product.views}</div></div>
       </div>
     </article>`;
 }
 
+function featuredMarkup(products) {
+  return products.slice(0, 4).map(product => `
+    <button class="featured-item compact-product" data-open-product="${product.id}">
+      <span class="featured-thumb">${conversationThumb(product)}</span>
+      <span class="featured-copy"><strong>${escapeHtml(product.name)}</strong><small>$${formatMoney(product.price)} · ${escapeHtml(product.seller?.name || '校園賣家')}</small></span>
+      <span class="like-count">♡ ${Math.max(8, Math.min(99, Number(product.views || 0) + 6))}</span>
+    </button>`).join('') || '<div class="empty-inline">目前沒有精選商品。</div>';
+}
+
+function activityMarkup(messages, products) {
+  const productItems = [...products].slice(0, 2).map(product => ({
+    initial: product.seller?.studentId?.slice(0, 1) || 'R',
+    title: product.seller?.name || '校園賣家',
+    copy: `剛剛上架了 ${product.name}`
+  }));
+  const messageItems = [...messages].slice(0, 2).map(message => ({
+    initial: message.author?.studentId?.slice(0, 1) || 'R',
+    title: message.author?.name || '使用者',
+    copy: `${formatDate(message.createdAt)} 留下了 ${message.type}`
+  }));
+  return [...productItems, ...messageItems].slice(0, 4).map(item => `
+    <div class="activity-item">
+      <span class="avatar">${escapeHtml(item.initial)}</span>
+      <span class="activity-copy"><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.copy)}</small></span>
+    </div>`).join('') || '<div class="empty-inline">目前沒有最新動態。</div>';
+}
+
 function renderHome() {
   const latest = [...state.products].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 4);
+  const featured = [...state.products].sort((a, b) => b.views - a.views);
   $('#latestProducts').innerHTML = latest.length ? latest.map(productCard).join('') : '<div class="empty-inline">目前沒有商品。</div>';
+  $('#featuredProducts').innerHTML = featuredMarkup(featured);
+  $('#latestActivity').innerHTML = activityMarkup(state.messages, latest);
 }
 
 function renderMarket() {
   $('#marketProducts').innerHTML = state.products.map(productCard).join('');
   $('#resultCount').textContent = `共 ${state.products.length} 件商品`;
+  $('#marketResultMirror').textContent = `${state.products.length} 件商品`;
+  $('#marketFeaturedProducts').innerHTML = featuredMarkup([...state.products].sort((a, b) => b.views - a.views));
+  $('#marketLatestActivity').innerHTML = activityMarkup(state.messages, state.products);
   $('#marketEmpty').classList.toggle('hidden', state.products.length > 0);
 }
 
@@ -395,9 +460,20 @@ function summaryStats() {
   ];
 }
 
+function miniStatsMarkup() {
+  const summary = state.analytics?.summary || {};
+  return [
+    ['💬', summary.total ?? 0, '待回覆'],
+    ['◷', summary.selling ?? 0, '進行中'],
+    ['▭', summary.sold ?? 0, '待取貨'],
+    ['✓', summary.sold ?? 0, '已完成']
+  ].map(([icon, value, label]) => `<div class="mini-stat"><b>${icon}</b><strong>${value}</strong><span>${label}</span></div>`).join('');
+}
+
 function renderStats() {
   const html = summaryStats().map(([icon, value, label]) => `<div class="stat-card"><div class="stat-icon">${icon}</div><div><strong>${value ?? 0}</strong><span>${label}</span></div></div>`).join('');
-  $('#homeStats').innerHTML = html;
+  $('#homeStats').innerHTML = miniStatsMarkup();
+  $('#marketStats').innerHTML = miniStatsMarkup();
   $('#analyticsStats').innerHTML = html;
 }
 
@@ -645,6 +721,13 @@ function bindEvents() {
       closeModal(closeButton.dataset.close);
       return;
     }
+    const favoriteButton = event.target.closest('.product-favorite');
+    if (favoriteButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      toast('已加入收藏展示');
+      return;
+    }
     const productCardNode = event.target.closest('.product-card');
     if (productCardNode) openProductDetail(Number(productCardNode.dataset.productId));
   });
@@ -746,15 +829,32 @@ function bindEvents() {
     let timer;
     return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
   };
-  $('#searchInput').addEventListener('input', debounce(loadProducts));
-  $('#categoryFilter').addEventListener('change', loadProducts);
-  $('#sortFilter').addEventListener('change', loadProducts);
-  $('#clearFilterBtn').addEventListener('click', () => {
-    $('#searchInput').value = '';
-    $('#categoryFilter').value = 'all';
-    $('#sortFilter').value = 'newest';
+  const updateSearch = debounce(event => setFilters({ search: event.target.value.trim() }));
+  $('#searchInput').addEventListener('input', updateSearch);
+  $('#marketSearchInput').addEventListener('input', updateSearch);
+  $('#globalSearchInput').addEventListener('keydown', event => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    state.filters.search = event.currentTarget.value.trim();
+    syncFilterControls();
+    switchView('market');
     loadProducts();
   });
+  $('#categoryFilter').addEventListener('change', event => setFilters({ category: event.target.value }));
+  $('#marketCategoryFilter').addEventListener('change', event => setFilters({ category: event.target.value }));
+  $('#sortFilter').addEventListener('change', event => setFilters({ sort: event.target.value }));
+  $('#marketSortFilter').addEventListener('change', event => setFilters({ sort: event.target.value }));
+  const clearFilters = () => {
+    setFilters({ search: '', category: 'all', sort: 'newest' });
+  };
+  $('#clearFilterBtn').addEventListener('click', clearFilters);
+  $('#marketClearFilterBtn').addEventListener('click', clearFilters);
+  $$('.category-tab').forEach(button => button.addEventListener('click', () => {
+    state.filters.category = button.dataset.categoryShortcut;
+    syncFilterControls();
+    switchView('market');
+    loadProducts();
+  }));
 
   $('#productImage').addEventListener('change', async event => {
     const file = event.target.files?.[0];
